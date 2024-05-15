@@ -42,33 +42,33 @@ SEIR_model <- function(
   for (t in 1:(timesteps-1)){
     
     s[t + 1] = s[t] +
-     params$mu - # births
+     params$mu_b - # births
      params$beta * s[t] * i[t] + # infection
      params$omega * r[t] - # lost immunity
      params$vac * s[t] - # vaccination
-     params$mu * s[t] # death
+     params$mu_d * s[t] # death
     
     e[t + 1] = e[t] +
      params$beta * s[t] * i[t] - # infection
      params$sigma * e[t] - # latency
-     params$mu * e[t] # death
+     params$mu_d * e[t] # death
     
     i[t + 1] = i[t] +
      params$sigma * e[t] - # latency
      params$gamma * i[t] - # recovery
-     (params$mu + params$alpha) * i[t] # death
+     (params$mu_d + params$alpha) * i[t] # death
     
     r[t + 1] = r[t] +
      params$gamma * i[t] + # recovery
      params$vac * s[t] - # vaccination
      params$omega * r[t] - # lost immunity
-     params$mu * r[t] # death
+     params$mu_d * r[t] # death
     
     d[t+1] = d[t] +
-     params$mu * s[t] +# death of susceptible
-     params$mu * e[t] +# death of exposed
-     (params$mu + params$alpha) * i[t] +# death of infected
-     params$mu * r[t] # death of recovered
+     params$mu_d * s[t] +# death of susceptible
+     params$mu_d * e[t] +# death of exposed
+     (params$mu_d + params$alpha) * i[t] +# death of infected
+     params$mu_d * r[t] # death of recovered
     
     infected_sum[t+1] = infected_sum[t] +
        params$beta * s[t] * i[t]
