@@ -39,8 +39,6 @@ SEIR_model <- function(
   e[1] = inits$e
   r[1] = inits$r
   
-  print(params)
-  
   for (t in 1:(timesteps-1)){
     
     s[t + 1] = s[t] +
