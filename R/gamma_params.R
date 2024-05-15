@@ -14,8 +14,8 @@ gamma_params <- function(mean, lowerCI, upperCI) {
   # Optimize the function to find the variance that minimizes test_val
   # Provide a reasonable range for variance based on the context
   result <- optimize(test_function, 
-                     interval = c(0.001, 100), 
-                     tol = 1e-4, 
+                     interval = c(1e-4, 100), 
+                     tol = 1e-7, 
                      mean = mean, lowerCI = lowerCI, upperCI = upperCI)
   
   # Extract the optimal variance

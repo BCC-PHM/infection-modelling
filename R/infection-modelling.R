@@ -1,7 +1,8 @@
 library(dplyr)
 library(ggplot2)
 
-#https://github.com/XuelongSun/Dynamic-Model-of-Infectious-Diseases/blob/master/SIR.ipynb
+source("gamma_params.R")
+
 
 SEIR_model <- function(
   params,
@@ -10,18 +11,19 @@ SEIR_model <- function(
   ) {
   
   # Check and fill missing elements with zero
-  for (elem in c("beta", "gamma", "sigma", "vac", "omega", "mu", "alpha")) {
-    if (!(elem %in% names(params))) {
-      params[[elem]] <- 0
-    }
-  }
-  
-  # Check and fill missing elements with zero
   for (elem in c("s", "e", "i", "r")) {
     if (!(elem %in% names(inits))) {
       inits[[elem]] <- 0
     }
   }
+  
+  # Calculate reciprocal values
+  params$gamma = 1/params$`1/gamma`
+  params$sigma = 1/params$`1/sigma`
+  params$omega = 1/params$`1/omega`
+  
+  # Calculate infection 
+  params$beta = params$R0 * params$gamma
   
   s = rep(0, timesteps)
   e = rep(0, timesteps)
@@ -37,7 +39,9 @@ SEIR_model <- function(
   e[1] = inits$e
   r[1] = inits$r
   
-  for (t in 1:(T-1)){
+  print(params)
+  
+  for (t in 1:(timesteps-1)){
     
     s[t + 1] = s[t] +
      params$mu - # births
@@ -73,7 +77,7 @@ SEIR_model <- function(
   }
   
   df <- data.frame(
-    "time" = 1:T,
+    "time" = 1:timesteps,
     "susceptible" = s,
     "exposed" = e,
     "infectious" = i,
@@ -83,50 +87,47 @@ SEIR_model <- function(
   ) 
   
   return(df)
+  }
+  
+param_sample <- function(
+    params_df
+) {
+  # calculate a random sample for each parameter in the data frame.
+  
+  # Get Poisson rate and shape for each parameter
+  shape <- c()
+  rate  <- c()
+  for (i in 1:nrow(params_df)) {
+    params <- gamma_params(
+      params_df$Value[i], 
+      params_df$lowerCI[i], 
+      params_df$UpperCI[i])
+    shape[i] <- params$shape
+    rate[i] <- params$rate
+  }
+
+  params_df$shape = shape
+  params_df$rate = rate
+  
+  params_df <- params_df %>%
+    rowwise() %>%
+    mutate(
+      Value = case_when (
+        Distribution == "Gamma" ~ 
+          rgamma(1, rate = rate, shape = shape),
+        Distribution == "Uniform" ~
+          runif(1, lowerCI, UpperCI),
+        Distribution == "Fixed" ~ Value,
+        TRUE ~ -1
+      )
+    ) %>%
+    ungroup() %>%
+    select(c(Parameter, Value))
+  
+  # Convert to list
+  output_list <- setNames(as.list(params_df$Value),    # Convert vectors to named list
+                          params_df$Parameter)
+  
+  return(output_list)
 }
 
-params <- list(
-  # contact rate
-  beta = 0.5,
-  # recover rate
-  gamma = 0.0821,
-  # exposed period
-  sigma = 1 / 4,
-  # vaccination rate
-  vac = 0.006,
-  # immunity loss rate
-  omega = 0.0001,
-  # daily birth/death rate
-  mu = 0.001,
-  # infected loss of life
-  alpha = 0.00000001
-)
-
-inits <- list(
-  # susceptiable ratio
-  s = 0.3,
-  # exposed ratio
-  e = 0,
-  # infective ratio
-  i = 0.01,
-  # recovered ratio
-  r = 0.7
-)
-
-# simuation Time / Day
-tsteps = 170
-
-df <- SEIR_model(params, inits, tsteps) %>%
-  reshape2::melt(id.vars = "time", 
-       variable.name = 'Group',
-       value.name = 'Fraction')
-
-plt <- ggplot(df, aes(x = time, y = Fraction, col = Group)) +
-  geom_line(linewidth = 1.1) +
-  theme_bw() +
-  ggtitle("Vaccination rate = 0.002") + theme(
-    plot.title = element_text(hjust = 0.5)
-  )
-
-ggsave("../output/figures/SEIR-test-new.png", plt, 
-       width = 5, height = 3)
