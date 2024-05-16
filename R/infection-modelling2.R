@@ -158,11 +158,12 @@ plot_SEIR_prob =function(
   # Add a group column
   combined_df =  combined_df %>% mutate(group = rep(1:length(df), each = nrow(df[[1]][["data"]])))
   
-  # Compute median and CI for each time point
-  summary_stats <- combined_df %>%
+  ########################################################################
+  # Compute median and CI for each time point for s 
+  summary_stats_s <- combined_df %>%
     group_by(data$time) %>%
     summarise(
-      median_susceptible = median(data$susceptible),
+      median = median(data$susceptible),
       CI_lower = quantile(data$susceptible, 0.025),
       CI_upper = quantile(data$susceptible, 0.975)
     )
@@ -171,24 +172,139 @@ plot_SEIR_prob =function(
   s = ggplot() +
     geom_line(data = combined_df, aes(x = data$time, y = data$susceptible, group = as.factor(group)), color = "grey", alpha = 0.9) +
     # Add median line
-    geom_line(data = summary_stats, aes(x = `data$time`, y = median_susceptible), color = "blue", size =0.9) +
+    geom_line(data = summary_stats_s, aes(x = `data$time`, y = median), color = "red", size =0.9) +
     # Add CI lines
-    geom_line(data = summary_stats, aes(x = `data$time`, y = CI_lower), linetype = "dotted", color = "red", size = 0.9) +
-    geom_line(data = summary_stats, aes(x = `data$time`, y = CI_upper), linetype = "dotted", color = "red", size = 0.9)+
-    geom_ribbon(data = summary_stats, aes(x = `data$time`, ymax = CI_upper, ymin = CI_lower), fill = "red", alpha=0.05)+
+    geom_line(data = summary_stats_s, aes(x = `data$time`, y = CI_lower), linetype = "dotted", color = "red", size = 0.9) +
+    geom_line(data = summary_stats_s, aes(x = `data$time`, y = CI_upper), linetype = "dotted", color = "red", size = 0.9)+
+    geom_ribbon(data = summary_stats_s, aes(x = `data$time`, ymax = CI_upper, ymin = CI_lower), fill = "red", alpha=0.05)+
     labs(title = "Median and 95%CI of simulated susceptible",
          x= "day",
          y="Fraction"
          )+
     theme_minimal()+
     theme(plot.title = element_text(hjust=0.5))
-    
-    
   
-  return(s)
+  ########################################################################    
 
+  # Compute median and CI for each time point for e
+  summary_stats_e <- combined_df %>%
+    group_by(data$time) %>%
+    summarise(
+      median = median(data$exposed),
+      CI_lower = quantile(data$exposed, 0.025),
+      CI_upper = quantile(data$exposed, 0.975)
+    )
   
+  
+  e = ggplot() +
+    geom_line(data = combined_df, aes(x = data$time, y = data$exposed, group = as.factor(group)), color = "grey", alpha = 0.9) +
+    # Add median line
+    geom_line(data = summary_stats_e, aes(x = `data$time`, y = median), color = "green", size =0.9) +
+    # Add CI lines
+    geom_line(data = summary_stats_e, aes(x = `data$time`, y = CI_lower), linetype = "dotted", color = "green", size = 0.9) +
+    geom_line(data = summary_stats_e, aes(x = `data$time`, y = CI_upper), linetype = "dotted", color = "green", size = 0.9)+
+    geom_ribbon(data = summary_stats_e, aes(x = `data$time`, ymax = CI_upper, ymin = CI_lower), fill = "green", alpha=0.05)+
+    labs(title = "Median and 95%CI of simulated exposed",
+         x= "day",
+         y="Fraction"
+    )+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust=0.5))
+  
+
+  ########################################################################
+  
+  # Compute median and CI for each time point for i
+  summary_stats_i <- combined_df %>%
+    group_by(data$time) %>%
+    summarise(
+      median = median(data$infectious),
+      CI_lower = quantile(data$infectious, 0.025),
+      CI_upper = quantile(data$infectious, 0.975)
+    )
+  
+  
+  i = ggplot() +
+    geom_line(data = combined_df, aes(x = data$time, y = data$infectious, group = as.factor(group)), color = "grey", alpha = 0.9) +
+    # Add median line
+    geom_line(data = summary_stats_i, aes(x = `data$time`, y = median), color = "blue", size =0.9) +
+    # Add CI lines
+    geom_line(data = summary_stats_i, aes(x = `data$time`, y = CI_lower), linetype = "dotted", color = "blue", size = 0.9) +
+    geom_line(data = summary_stats_i, aes(x = `data$time`, y = CI_upper), linetype = "dotted", color = "blue", size = 0.9)+
+    geom_ribbon(data = summary_stats_i, aes(x = `data$time`, ymax = CI_upper, ymin = CI_lower), fill = "blue", alpha=0.05)+
+    labs(title = "Median and 95%CI of simulated infectious",
+         x= "day",
+         y="Fraction"
+    )+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust=0.5))
+  
+ 
+  
+  ########################################################################
+ 
+  
+  # Compute median and CI for each time point for r
+  summary_stats_r <- combined_df %>%
+    group_by(data$time) %>%
+    summarise(
+      median = median(data$recovered),
+      CI_lower = quantile(data$recovered, 0.025),
+      CI_upper = quantile(data$recovered, 0.975)
+    )
+  
+  
+  r = ggplot() +
+    geom_line(data = combined_df, aes(x = data$time, y = data$recovered, group = as.factor(group)), color = "grey", alpha = 0.9) +
+    # Add median line
+    geom_line(data =summary_stats_r, aes(x = `data$time`, y = median), color = "purple", size =0.9) +
+    # Add CI lines
+    geom_line(data =summary_stats_r, aes(x = `data$time`, y = CI_lower), linetype = "dotted", color = "purple", size = 0.9) +
+    geom_line(data =summary_stats_r, aes(x = `data$time`, y = CI_upper), linetype = "dotted", color = "purple", size = 0.9)+
+    geom_ribbon(data =summary_stats_r, aes(x = `data$time`, ymax = CI_upper, ymin = CI_lower), fill = "purple", alpha=0.05)+
+    labs(title = "Median and 95%CI of simulated recovered",
+         x= "day",
+         y="Fraction"
+    )+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust=0.5))
+  
+  
+  ########################################################################
+  #combine all the line into a single graph 
+  # Combine all summary statistics data frames into a single data frame
+  combined_summary_stats <- bind_rows(
+    mutate(summary_stats_s, group = "Susceptible"),
+    mutate(summary_stats_e, group = "Exposed"),
+    mutate(summary_stats_i, group = "Infectious"),
+    mutate(summary_stats_r, group = "Recovered")
+  )
+  
+  combined_summary_stats$group = factor(combined_summary_stats$group, levels = c("Susceptible",
+                                                                                 "Exposed",
+                                                                                 "Infectious",
+                                                                                 "Recovered"))
+  
+  # Plot using color inside aes() and creating lines and ribbons for each group
+ all=  ggplot(combined_summary_stats, aes(x = `data$time`, y = median, color = group, fill = group, ymin = CI_lower, ymax = CI_upper)) +
+    geom_line(size = 0.9) +
+    geom_ribbon(alpha = 0.05, linetype = 0) +
+    labs(
+      title = "SEIR model",
+      x = "Day",
+      y = "Fraction"
+    ) +
+   scale_color_manual(values = c("red", "green", "blue", "purple")) +
+   scale_fill_manual(values = c("red", "green", "blue", "purple")) +
+   theme_minimal()+
+   theme(plot.title = element_text(hjust = 0.5))
+    
+  
+  
+ return(all)
 }
+
+
 
 
 
