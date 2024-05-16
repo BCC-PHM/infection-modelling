@@ -1,5 +1,7 @@
 library(dplyr)
 library(ggplot2)
+library(egg)
+library(gridExtra)
 
 source("gamma_params.R")
 
@@ -98,7 +100,8 @@ SEIR_model_prob <- function(
   
 param_sample_prob <- function(
     params_df,
-    iter = 100 #numbers of param sample to be produced
+    iter = 100,
+    #numbers of param sample to be produced
 ) {
   # calculate a random sample for each parameter in the data frame.
   
@@ -150,7 +153,8 @@ param_sample_prob <- function(
 
 
 plot_SEIR_prob =function(
-    df=SEIR_df){
+    df=SEIR_df,
+    plot = "all"){
   #create a long format table 
   combined_df = bind_rows(df)
   
@@ -300,8 +304,61 @@ plot_SEIR_prob =function(
    theme(plot.title = element_text(hjust = 0.5))
     
   
-  
- return(all)
+ ##########################################################################
+ # create all plot with empty  legend
+ all_empty_legend=  ggplot(combined_summary_stats, aes(x = `data$time`, y = median, color = group, fill = group, ymin = CI_lower, ymax = CI_upper)) +
+   geom_line(size = 0.9) +
+   geom_ribbon(alpha = 0.05, linetype = 0) +
+   labs(
+     title = "SEIR model",
+     x = "Day",
+     y = "Fraction"
+   ) +
+   scale_color_manual(values = c("red", "green", "blue", "purple")) +
+   scale_fill_manual(values = c("red", "green", "blue", "purple")) +
+   theme_minimal()+
+   theme(plot.title = element_text(hjust = 0.5),
+         legend.position = "none")
+ 
+ # create all plot with  legend only
+ legend= ggplot(combined_summary_stats, aes(x = `data$time`, y = median, color = group, fill = group, ymin = CI_lower, ymax = CI_upper)) +
+   geom_line(size = 0.9) +
+   geom_ribbon(alpha = 0.05, linetype = 0) +
+   lims(x = c(0,0), y = c(0,0))+
+   scale_color_manual(values = c("red", "green", "blue", "purple")) +
+   scale_fill_manual(values = c("red", "green", "blue", "purple")) +
+   theme_void()+
+   theme(legend.position = c(0.5,0.5),
+         legend.key.size = unit(1, "cm"),
+         legend.text = element_text(size =  12),
+         legend.title = element_text(size = 15, face = "bold"))+
+   guides(colour = guide_legend(override.aes = list(size=8)))
+
+
+ 
+ ##stick all the graph together
+ 
+ # #arrange plot
+ combined_all <- ggarrange(all_empty_legend, s, e, i, r,legend,
+                           ncol =3, nrow=2
+                           )
+
+
+ if (plot == "SEIR") {
+   return(all)
+ } else if (plot == "s") {
+   return(s)
+ } else if (plot == "e") {
+   return(e)
+ } else if (plot == "i") {
+   return(i)
+ } else if (plot == "r") {
+   return(r)
+ } else {
+   return(combined_all)
+ }
+ 
+ 
 }
 
 
