@@ -7,7 +7,8 @@ source("gamma_params.R")
 SEIR_model <- function(
   params,
   inits,
-  timesteps = 100
+  timesteps = 100,
+  t0 = 1
   ) {
   
   # Check and fill missing elements with zero
@@ -75,7 +76,7 @@ SEIR_model <- function(
   }
   
   df <- data.frame(
-    "time" = 1:timesteps,
+    "time" = t0:(t0 + timesteps + -1),
     "susceptible" = s,
     "exposed" = e,
     "infectious" = i,
