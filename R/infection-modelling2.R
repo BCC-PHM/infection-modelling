@@ -9,7 +9,9 @@ source("gamma_params.R")
 SEIR_model_prob <- function(
     params,
     inits,
-    timesteps = 100
+    timesteps = 100,
+    print_progress = TRUE 
+    
 ) {
   
   #create an empty list
@@ -85,6 +87,18 @@ SEIR_model_prob <- function(
       "died" = d,
       "infected sum" = infected_sum
     )) 
+    
+    # Define progress intervals
+    progress_intervals <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+    
+    # Calculate progress percentage
+    progress <- n / length(params)
+    
+    # Check if progress reaches certain intervals
+    if (print_progress && progress %in% progress_intervals) {
+      cat("Iteration", n, "complete.\n")
+    }
+    
   }
   
   return(df)
