@@ -100,7 +100,9 @@ SEIR_model_prob <- function(
   
 param_sample_prob <- function(
     params_df,
+    vac=0,
     iter = 100,
+    print_progress = TRUE 
     #numbers of param sample to be produced
 ) {
   # calculate a random sample for each parameter in the data frame.
@@ -142,9 +144,21 @@ param_sample_prob <- function(
     
     output_list[[i]] <- setNames(as.list(sampled_params_df$Value),    # Convert vectors to named list
                                  params_df$Parameter)
-}
+    
+    output_list[[i]]$vac = vac
+    
+    # Define progress intervals
+    progress_intervals <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+    
+    # Calculate progress percentage
+    progress <- i / iter
+    
+    # Check if progress reaches certain intervals
+    if (print_progress && progress %in% progress_intervals) {
+      cat("Iteration", i, "complete.\n")
+    }
+ }
 
-  
   return(output_list)
 
 }
