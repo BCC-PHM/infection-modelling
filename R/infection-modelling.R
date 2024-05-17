@@ -99,7 +99,8 @@ param_sample <- function(
     params <- gamma_params(
       params_df$Value[i], 
       params_df$lowerCI[i], 
-      params_df$UpperCI[i])
+      params_df$upperCI[i],
+      params_df$Distribution[i])
     shape[i] <- params$shape
     rate[i] <- params$rate
   }
@@ -107,6 +108,8 @@ param_sample <- function(
   params_df$shape = shape
   params_df$rate = rate
   
+  # I feel like theres a better way to get rid of these warnings
+  suppressWarnings(
   params_df <- params_df %>%
     rowwise() %>%
     mutate(
@@ -114,13 +117,14 @@ param_sample <- function(
         Distribution == "Gamma" ~ 
           rgamma(1, rate = rate, shape = shape),
         Distribution == "Uniform" ~
-          runif(1, lowerCI, UpperCI),
+          runif(1, lowerCI, upperCI),
         Distribution == "Fixed" ~ Value,
         TRUE ~ -1
       )
     ) %>%
     ungroup() %>%
     select(c(Parameter, Value))
+  )
   
   # Convert to list
   output_list <- setNames(as.list(params_df$Value),    # Convert vectors to named list
