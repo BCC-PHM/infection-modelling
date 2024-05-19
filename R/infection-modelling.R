@@ -76,13 +76,13 @@ SEIR_model <- function(
   }
   
   df <- data.frame(
-    "time" = t0:(t0 + timesteps + -1),
-    "susceptible" = s,
-    "exposed" = e,
-    "infectious" = i,
-    "recovered" = r,
-    "died" = d,
-    "infected sum" = infected_sum
+    "Time" = t0:(t0 + timesteps + -1),
+    "Susceptible" = s,
+    "Exposed" = e,
+    "Infectious" = i,
+    "Recovered" = r,
+    "Died" = d,
+    "Infected_sum" = infected_sum
   ) 
   
   return(df)
