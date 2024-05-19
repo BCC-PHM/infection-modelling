@@ -1,17 +1,17 @@
 # Estimating Birmingham's polio resistance
 library("latex2exp")
-source("../infection-modelling.R")
+source("infection-modelling.R")
 
 # Set random seed
 set.seed(1)
 
 # Load in parameters
 params_df <- readxl::read_excel(
-  "../../data/parameters.xlsx", 
+  "../data/parameters.xlsx", 
   sheet = "Polio")
 
 vac_data <- read.csv(
-  "../../data/Polio/IPV_age_5_booster.csv",
+  "../data/Polio/IPV_age_5_booster.csv",
   check.names = FALSE
 ) %>%
   filter(
@@ -118,7 +118,7 @@ plt <- ggplot() +
 plt
 
 # Save plot
-ggsave("../../output/figures/polio_estimate.png", plt, 
+ggsave("../output/figures/polio_estimate.png", plt, 
        width = 7, height = 5, dpi = 300)
 
 # Plot distribution of values for today
@@ -133,7 +133,7 @@ plt_hist <- ggplot(all_vals_today, aes(x=Fraction, fill = Group)) +
   ylab("Number of Rimulation Runs")
 
 plt_hist
-ggsave("../../output/figures/polio_hist.png", plt_hist, 
+ggsave("../output/figures/polio_hist.png", plt_hist, 
        width = 7, height = 5, dpi = 300)
 
 # Fit recovered distribution to skewed normal distribution
@@ -146,5 +146,5 @@ print(R_dist_params)
 
 # Extract group fractions for last time step and save
 estimate_today <- summary_stats_r[summary_stats_r$date == max(summary_stats_r$date),]
-writexl::write_xlsx(estimate_today, "../../output/data/polio_inits.xslx")
+writexl::write_xlsx(estimate_today, "../output/data/polio_inits.xslx")
 print(estimate_today)
