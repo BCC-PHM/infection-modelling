@@ -7,7 +7,8 @@ source("gamma_params.R")
 SEIR_model <- function(
   params,
   inits,
-  timesteps = 100
+  timesteps = 100,
+  t0 = 1
   ) {
   
   # Check and fill missing elements with zero
@@ -75,13 +76,13 @@ SEIR_model <- function(
   }
   
   df <- data.frame(
-    "time" = 1:timesteps,
-    "susceptible" = s,
-    "exposed" = e,
-    "infectious" = i,
-    "recovered" = r,
-    "died" = d,
-    "infected sum" = infected_sum
+    "Time" = t0:(t0 + timesteps + -1),
+    "Susceptible" = s,
+    "Exposed" = e,
+    "Infectious" = i,
+    "Recovered" = r,
+    "Died" = d,
+    "Infected_sum" = infected_sum
   ) 
   
   return(df)
@@ -99,7 +100,8 @@ param_sample <- function(
     params <- gamma_params(
       params_df$Value[i], 
       params_df$lowerCI[i], 
-      params_df$UpperCI[i])
+      params_df$upperCI[i],
+      params_df$Distribution[i])
     shape[i] <- params$shape
     rate[i] <- params$rate
   }
@@ -107,6 +109,8 @@ param_sample <- function(
   params_df$shape = shape
   params_df$rate = rate
   
+  # I feel like theres a better way to get rid of these warnings
+  suppressWarnings(
   params_df <- params_df %>%
     rowwise() %>%
     mutate(
@@ -114,13 +118,14 @@ param_sample <- function(
         Distribution == "Gamma" ~ 
           rgamma(1, rate = rate, shape = shape),
         Distribution == "Uniform" ~
-          runif(1, lowerCI, UpperCI),
+          runif(1, lowerCI, upperCI),
         Distribution == "Fixed" ~ Value,
         TRUE ~ -1
       )
     ) %>%
     ungroup() %>%
     select(c(Parameter, Value))
+  )
   
   # Convert to list
   output_list <- setNames(as.list(params_df$Value),    # Convert vectors to named list
