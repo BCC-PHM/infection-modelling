@@ -1,23 +1,27 @@
 set.seed(2)
 source("infection-modelling.R")
 
-nsims = 1000
+nsims = 100#0
 
 # Values from polio_R_estimate.R
-r0_vals = rsn(n=nsims, xi=0.8207131, omega=0.0386484, alpha=2.0402655)
+R_init_vals = sn::rsn(n=nsims, xi=0.8207131, omega=0.0386484, alpha=2.0402655)
 
 # Load in parameters
 params_df <- readxl::read_excel(
   "../data/parameters.xlsx", 
   sheet = "Polio")
 
+# Checking impact of smaller R0
+params_df[params_df$Parameter == "R0",]$Value = 1
+params_df[params_df$Parameter == "R0",]$lowerCI = 0.8
+params_df[params_df$Parameter == "R0",]$upperCI = 1.2
 
 # Check if any R0 value violates the bounds
 testit::assert("R0 violated bounds of (0 to 1)", {
-  !(any(r0_vals <= 0) | any(r0_vals > 1))
+  !(any(R_init_vals <= 0) | any(R_init_vals > 1))
 })
 
-r0 = r0_vals[0]
+R_init = R_init_vals[0]
 
 # This may seem off since England is "worse" than Birmingham
 # however, this is a reflection of the fact that Birmingham
@@ -25,7 +29,7 @@ r0 = r0_vals[0]
 # of the *total* population are vaccinated each year.
 vac_vals <- list(
   "No vac" = 0,
-  "National" = 2.722e-05, # 567057 / 57106400 / 365,
+  #"National" = 2.722e-05, # 567057 / 57106400 / 365,
   "No change" = 3.186e-05,
   "100%" = 4.21e-5
 )
@@ -38,20 +42,21 @@ for (j in 1:length(vac_vals)) {
   run_dfs <- list()
   # loop over all R0 values
   for (i in 1:nsims) {
-    r0 = r0_vals[[i]]
+    r_init = R_init_vals[[i]]
     # exposed ratio
-    e0 = 3e-6
+    e_init = 3e-4
     # infected ratio
-    i0 = 0 #7e-4
+    i_init = 7e-4
     # susceptible ratio
-    s0 = 1-r0-e0-i0
+    s_init = 1-r_init-e_init-i_init
     
     # Define initial conditions
-    inits <- list(s = s0, e = e0, i = i0, r = r0)
+    inits <- list(s = s_init, e = e_init, i = i_init, r = r_init)
     
     sampled_params <- param_sample(params_df)
     # Change vac with current value being tested
     sampled_params$vac = vac_vals[[j]]
+    sampled_params$R0 = 1
     
     SEIR_df <- SEIR_model(sampled_params, inits, timesteps = 365*5, t0 = 1) 
     
@@ -102,7 +107,7 @@ polio_result_dist <- ggplot(full_sim_df, aes(x = Infected_sum,
   theme_bw() +
   #facet_wrap(~vac_scenario) +
   theme(strip.background = element_rect(fill="white")) +
-  scale_x_continuous(trans='log10') +
+  #scale_x_continuous(trans='log10') +
   #theme(legend.position="none") +
   xlab("Total Proportion of Population Infected with Polio (5 Years)") +
   viridis::scale_color_viridis(discrete = TRUE, option = "G", 
