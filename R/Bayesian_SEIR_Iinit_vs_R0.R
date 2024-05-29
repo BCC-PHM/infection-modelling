@@ -70,7 +70,7 @@ model {
   death <- 0.000034
   
   # Immunity loss rate
-  omega =0     # Rate of loss of immunity
+  omega = 0     # Rate of loss of immunity
   
   #fixed vacinnation rate
   vacc_rate = 0.00003373568
