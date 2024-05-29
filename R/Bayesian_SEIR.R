@@ -2,6 +2,8 @@
 library(readxl)
 library(tidyverse)
 library(rjags)
+library(egg)
+library(bayesplot)
 
 
 hospital_data =read_excel("~/R projects/infection-modelling/data/REQ3280_Inpatients_data_10years_on_polio_flu_and_rubella_BirminghamResidents.xlsx")
@@ -48,8 +50,8 @@ data <- list(
 model_code <- "
 model {
   # Prior distributions for parameters
-  sigma =0.25     # Rate of transition from exposed to infectious dgamma(7.617034, 53)
-  gamma =0.09  # Rate of recovery/removal dgamma(14, 201) 
+  sigma =0.25      # Rate of transition from exposed to infectious ~dgamma(7.617034, 53) 0.25
+  gamma ~dgamma(14, 201)  # Rate of recovery/removal ~dgamma(14, 201) 0.09
   R_0 ~ dunif(0,10)         #dgamma(36,6)
   
   #contact rate
@@ -69,7 +71,7 @@ model {
   vacc_rate = 0.00003373568
   
   #hospitalisation rate 
-  hosp =0.00465
+  eta ~ dunif(0,0.01)               #0.00465
   hosprecover =0.09
 
   # Initial conditions
@@ -79,13 +81,14 @@ model {
   H[1] = 0
   R[1] <- 858675 #75% of people are vaccinated in the population
   total_infected[1] = I[1]
+  admission[1] = H[1]
 
   # SEIR dynamics
   for (t in 2:time) {
     dS[t] <- birth * N - beta * S[t-1] * I[t-1] / N - death * S[t-1]+ omega * R[t-1] - vacc_rate * S[t-1]
     dE[t] <- beta * S[t-1] * I[t-1] / N - sigma * E[t-1] - death * E[t-1]
-    dI[t] <- sigma * E[t-1] - gamma * I[t-1] - (death+alpha) * I[t-1] - hosp*I[t-1]
-    dH[t] = hosp*I[t-1]- hosprecover*H[t-1]-death*H[t-1]
+    dI[t] <- sigma * E[t-1] - gamma * I[t-1] - (death+alpha) * I[t-1] - eta*I[t-1]
+    dH[t] = eta*I[t-1]- hosprecover*H[t-1]-death*H[t-1]
     dR[t] <- gamma * I[t-1] - death * R[t-1]- omega * R[t-1] + vacc_rate * S[t-1]+hosprecover*H[t-1]
 
     S[t] <- S[t-1] + dS[t]
@@ -94,7 +97,7 @@ model {
     H[t] = H[t-1]+ dH[t]
     R[t] <- R[t-1] + dR[t]
     total_infected[t] = total_infected[t-1]+beta * S[t-1] * I[t-1] / N
-    
+    admission[t] = eta*I[t-1]
     }
 
     for (t in 2:time) {
@@ -107,7 +110,7 @@ model <- jags.model(textConnection(model_code), data = data,  n.chains = 3, n.ad
 
 
 ##sample from the posterior
-mcmc = coda.samples(model = model, variable.names = c("R_0"), n.iter = 20000, thin = 2)
+mcmc = coda.samples(model = model, variable.names = c("R_0", "gamma", "eta", "admission"), n.iter = 20000, thin = 2)
 
 
 
@@ -117,23 +120,29 @@ polio_posterior_chain1 = as.data.frame(mcmc[[1]])
 
 
 quantile(polio_posterior_chain1$R_0, c(0.025,0.5, 0.975))
-
-
-# 
-
-
-
-# 
-# ggplot(polio_posterior_chain1, aes(x=hosp))+geom_density()+theme_minimal()
-# ggplot(polio_posterior_chain1, aes(x=seq(1,10000, by=1), y=hosp))+geom_line()+theme_minimal()
-# 
-# 
-# ggplot(polio_posterior_chain1, aes(x=R_0))+geom_density()+theme_minimal()
-# 
-# ggplot(polio_posterior_chain1, aes(x=seq(1,10000, by=1), y=R_0))+geom_line()+theme_minimal()
+quantile(polio_posterior_chain1$hosp, c(0.025,0.5, 0.975))
+quantile(polio_posterior_chain1$gamma, c(0.025,0.5, 0.975))
 
 
 
+##using bayesplot
+
+#set colour
+color_scheme_set("mix-blue-red")
+
+#trace plot
+traceplot = mcmc_trace(mcmc, pars = c("R_0", "gamma", "eta"),
+           facet_args = list(nrow=3))
+
+#density plot
+
+densityplot = mcmc_dens_overlay(mcmc, pars = c("R_0", "gamma", "eta"),
+                  facet_args = list(nrow=3))
+
+
+
+ggarrange(traceplot,densityplot,
+          nrow = 1, ncol = 2)
 
 
 
@@ -142,9 +151,11 @@ quantile(polio_posterior_chain1$R_0, c(0.025,0.5, 0.975))
 
 
 
-write.csv(polio_posterior_chain1, "polio_posterior_chain1")
-# par(mfrow=c(4,1),mar=c(4,4,1,1))
-# plot(data.frame(mcmc[["beta"]]), ,type="l")
-# plot(data.frame(mcmc[["sigma"]]), ,type="l")
-# plot(data.frame(mcmc[["gamma"]]), ,type="l")
-# plot(data.frame(mcmc[["case"]]), ,type="l")
+
+
+
+
+
+
+
+write.csv(polio_posterior_chain1, "polio_posterior_chain1.csv")
