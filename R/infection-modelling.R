@@ -24,13 +24,21 @@ SEIR_model <- function(
   params$omega = 1/params$`1/omega`
   
   # Calculate infection 
-  params$beta = params$R0 * params$gamma
+  if (is.null(params$beta)) {
+    params$beta = params$R0 * params$gamma
+  }
+  
+  if (is.null(params$hosp)) {
+    params$hosp = 0
+  }
+  
   
   s = rep(0, timesteps)
   e = rep(0, timesteps)
   i = rep(0, timesteps)
   r = rep(0, timesteps)
   d = rep(0, timesteps)
+  admissions = rep(0, timesteps)
   
   infected_sum = rep(0, timesteps)
   
@@ -73,6 +81,8 @@ SEIR_model <- function(
     
     infected_sum[t+1] = infected_sum[t] +
        params$beta * s[t] * i[t]
+    
+    admissions[t+1] <- params$hosp * i[t]
   }
   
   df <- data.frame(
@@ -82,7 +92,9 @@ SEIR_model <- function(
     "Infectious" = i,
     "Recovered" = r,
     "Died" = d,
-    "Infected_sum" = infected_sum
+    "Infected_sum" = infected_sum,
+    "Admissions" = admissions,
+    "Admissions_sum" = cumsum(admissions)
   ) 
   
   return(df)
@@ -116,7 +128,7 @@ SEIHR_model <- function(
   h = rep(0, timesteps)
   r = rep(0, timesteps)
   d = rep(0, timesteps)
-  
+  addmissions = rep(0, timesteps)
   
   infected_sum = rep(0, timesteps)
   
@@ -147,8 +159,10 @@ SEIHR_model <- function(
       params$hosp * i[t] - # hospitalization
       (params$mu_d + params$alpha) * i[t] # death
     
+    admissions[t+1] <- params$hosp * i[t]
+    
     h[t+1] = h[t] + 
-      params$hosp * i[t] - # hospitalization
+      admissions[t+1] - # hospitalization
       params$gamma * h[t] - # recovery 
       params$mu_d * h[t] # death
     
@@ -177,7 +191,8 @@ SEIHR_model <- function(
     "Recovered" = r,
     "Hospital" = h,
     "Died" = d,
-    "Infected_sum" = infected_sum
+    "Infected_sum" = infected_sum,
+    "Admissions" = admissions
   ) 
   
   return(df)
