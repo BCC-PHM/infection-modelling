@@ -9,8 +9,8 @@ source("infection-modelling.R")
 
 set.seed(0)
 
-post_chain <- read.csv("../data/Polio/polio_posterior_final 1.csv") %>% 
-  pivot_longer(
+post_chain <- read.csv("../data/Polio/polio_posterior_final.csv") %>% 
+  tidyr::pivot_longer(
     cols = c("R_0","gamma","eta"),
     names_to='Parameter',
     values_to='Value') %>%
@@ -21,15 +21,15 @@ post_chain <- read.csv("../data/Polio/polio_posterior_final 1.csv") %>%
 post_chain
 
 params <- list(
-  "R0" = 4.96, # 5, # From Bayesian SEIHR model
-  "1/gamma" = 1/0.0654, 
+  "R0" = 4.98, # 5, # From Bayesian SEIHR model
+  "1/gamma" = 1/0.09, 
   "1/sigma" = 4,
   "1/omega" = 1e99,
   "vac" = 3.374e-5,
   "alpha" = 0,
   "mu_b" = 3.464e-5,
   "mu_d" = 3.449e-5,
-  "hosp" = 0.000104# 3e-5
+  "hosp" = 0.000107# 3e-5
 )
 
 inits <- list(
@@ -55,7 +55,7 @@ result <- SEIR_model(
 ) 
 result_long <- result %>%
   select(-c("Died", "Infected_sum")) %>% 
-  pivot_longer(
+  tidyr::pivot_longer(
   cols = c("Susceptible","Exposed","Infectious","Recovered"),
   names_to='Group',
   values_to='Fraction')
