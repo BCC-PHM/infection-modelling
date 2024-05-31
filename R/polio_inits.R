@@ -11,12 +11,14 @@ set.seed(0)
 
 post_chain <- read.csv("../data/Polio/polio_posterior_final.csv") %>% 
   tidyr::pivot_longer(
-    cols = c("R_0","gamma","eta"),
+    cols = c("R_0","eta"),
     names_to='Parameter',
     values_to='Value') %>%
   group_by(Parameter) %>%
   summarize(
-    Value = median(Value)
+    Median = quantile(Value, 0.5),
+    lowerCI = quantile(Value, 0.025),
+    upperCI = quantile(Value, 0.965)
   )
 post_chain
 
@@ -34,9 +36,9 @@ params <- list(
 
 inits <- list(
   r = 0.8,
-  e = 8.0e-5,
-  s = 1 - 0.8 - 8.0e-5 - 3.0e-4,
-  i = 3.0e-5
+  e = 0.0000838,
+  s = 1 - 0.8 - 0.0000838 - 0.000233,
+  i = 0.000233
 )
 # 
 # inits <- list(
