@@ -9,7 +9,7 @@ source("infection-modelling.R")
 
 set.seed(0)
 
-post_chain <- read.csv("../data/Polio/polio_posterior_final.csv") %>% 
+post_chain <- read.csv("../data/Polio/polio_posterior_BSOL 1.csv") %>% 
   tidyr::pivot_longer(
     cols = c("R_0","eta"),
     names_to='Parameter',

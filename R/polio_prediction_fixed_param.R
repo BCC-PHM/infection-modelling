@@ -2,21 +2,19 @@ library(dplyr)
 library(ggplot2)
 source("infection-modelling.R")
 
-set.seed(2)
+set.seed(0)
 
 num_param_samples <- 1000
 
-pop_size <- 1144900
+pop_size <- 1361159
 
 vac_vals <- list(
-  "No new vaccinations" = 0,
+  "50% vaccination rate" = 4.21e-5/2,
   "No change" = 3.186e-05,
-  "100%" = 4.21e-5
+  "100% vaccination rate" = 4.21e-5
 )
 
-set.seed(0)
-
-post_chain <- read.csv("../data/Polio/polio_posterior_final.csv") %>%
+post_chain <- read.csv("../data/Polio/polio_posterior_BSOL 1.csv") %>%
   sample_n(num_param_samples)
 
 params <- list(
@@ -37,12 +35,12 @@ for (j in 1:length(vac_vals)) {
   run_dfs <- list()
   # loop over all R0 values
   for (i in 1:num_param_samples) {
-    
+    set.seed(0)
     inits <- list(
-      r = 0.8,
-      e = 0.0000838,
-      s = 1 - 0.8 - 0.0000838 - 0.000233,
-      i = 0.000233
+      r = 0.803,
+      e = 0.0000837,
+      s = 1 - 0.803 - 0.0000837 - 0.000232,
+      i = 0.000232
     )
     
     # convert parameter df to list
@@ -57,6 +55,8 @@ for (j in 1:length(vac_vals)) {
     run_dfs[[i]] <- SEIR_df %>%
       mutate(
         run = i,
+        R0 = post_chain$R_0[[i]],
+        eta = post_chain$eta[[i]]
         )
   }
   
@@ -66,7 +66,7 @@ for (j in 1:length(vac_vals)) {
 }
 
 full_sim_df <- data.table::rbindlist(output_df_list) %>%
-  select(c(vac_scenario, Infected_sum, Admissions_sum, Time, run)) %>%
+  select(c(vac_scenario, Infected_sum, Admissions_sum, Time, run, R0, eta)) %>%
   mutate(
     `Polio Infections` = Infected_sum * pop_size,
     `Acute Polio Admissions` = Admissions_sum * pop_size
@@ -88,7 +88,7 @@ result_snapshots <- full_sim_df %>%
     Year = factor(Year, 
                   level = c("5 Years", "10 Years")),
     vac_scenario = factor(vac_scenario, 
-                          level = c("No new vaccinations", "No change","100%"))
+                          level = c("50% vaccination rate", "No change","100% vaccination rate"))
   )
 
 # extract last data for last date
@@ -162,7 +162,9 @@ over_time <- full_sim_df %>%
     upperCI = quantile(Count, 0.75)
   ) %>%
   mutate(
-    Years = Time/365
+    Years = Time/365,
+    vac_scenario = factor(vac_scenario, 
+                          level = c("50% vaccination rate", "No change","100% vaccination rate"))
   )
 
 time_plt <- ggplot(over_time, aes(x = Years, y = median_count, color = vac_scenario)) +
@@ -190,3 +192,19 @@ time_plt <- ggplot(over_time, aes(x = Years, y = median_count, color = vac_scena
 time_plt
 ggsave("../output/figures/polio_time_plot.pdf", time_plt, 
        width = 7, height = 5, dpi = 300)
+
+bifurcation <- ggplot(result_snapshots, aes(x = R0, y = Infected_sum * pop_size, color = vac_scenario)) +
+  geom_point(size = 0.6) +
+  theme_bw() +
+  viridis::scale_color_viridis(discrete = TRUE, option = "G", 
+                             begin = 0.3, end = 0.8) +
+  labs(
+    y = "Total Infection Estimate (10 Years)", 
+    x = latex2exp::TeX("Basic Reproduction Number $R_0$"), 
+    color = "Vaccination Scenario"
+  ) +
+  scale_y_log10() +
+  theme(legend.position = "inside", legend.position.inside = c(0.2, 0.75)) 
+
+ggsave("../output/figures/polio_bifurcation.pdf", bifurcation, 
+       width = 6, height = 3, dpi = 300)
