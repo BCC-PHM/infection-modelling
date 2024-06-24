@@ -12,9 +12,9 @@ params_df <- readxl::read_excel(
 # Define initial conditions
 inits <- list(
   # susceptible ratio
-  s = 0.99,
+  s = 99,
   # exposed ratio
-  e = 0.001,
+  e = 1,
   # infected ratio
   i = 0,
   # recovered ratio
@@ -25,7 +25,7 @@ inits <- list(
 
 # Create new parameter sample with 100 iterations
 params= param_sample_prob(params_df, 
-                          iter = 1000, 
+                          iter = 100, 
                           vac = 0.5)  #set a vaccine coverage rate here 
 
 

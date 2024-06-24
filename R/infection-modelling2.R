@@ -35,6 +35,7 @@ SEIR_model_prob <- function(
     r <- rep(0, timesteps)
     d <- rep(0, timesteps)
     infected_sum <- rep(0, timesteps)
+    vaccinated_sum = rep(0, timesteps)   #calculate the sum of vaccinated people
     
     # initial infected people
     i[1] <- inits$i
@@ -75,6 +76,8 @@ SEIR_model_prob <- function(
       
       infected_sum[t + 1] <- infected_sum[t] +
         current_params$beta * s[t] * i[t]
+      
+      vaccinated_sum[t+1] = vaccinated_sum[t]+ current_params$vac*s[t] # Update vaccinated count
     }
     
     #return a list containing dataframe with respect to each [n] of the params sample 
@@ -85,7 +88,8 @@ SEIR_model_prob <- function(
       "infectious" = i,
       "recovered" = r,
       "died" = d,
-      "infected sum" = infected_sum
+      "infected sum" = infected_sum,
+      "vaccinated_sum" = vaccinated_sum
     )) 
     
     # Define progress intervals
@@ -96,7 +100,7 @@ SEIR_model_prob <- function(
     
     # Check if progress reaches certain intervals
     if (print_progress && progress %in% progress_intervals) {
-      cat("Iteration", n, "complete.\n")
+      cat("Iteration", n, "completed.\n")
     }
     
   }
@@ -169,7 +173,7 @@ param_sample_prob <- function(
     
     # Check if progress reaches certain intervals
     if (print_progress && progress %in% progress_intervals) {
-      cat("Iteration", i, "complete.\n")
+      cat("Iteration", i, "completed.\n")
     }
  }
 
@@ -387,13 +391,13 @@ plot_SEIR_prob =function(
  }
  
  
+ 
 }
 
 
 
 
 
-plot_SEIR_prob(SEIR_df)
 
 
 
